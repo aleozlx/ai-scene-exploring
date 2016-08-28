@@ -48,8 +48,11 @@
 <!-- ref:
     http://seiyria.com/bootstrap-slider/
 -->
-<h3>DFS</h3>
-<p>See console output for DFS results. Change size or click on the slider to regenerate.</p>
+<p>See console for detailed DFS steps. Change size or click on the slider to regenerate.<br/>
+Labels on each room means "<strong>Room number [ DFS order ]</strong>" e.g. 4 [0] -> 
+Room 4, which is the 1st room discovered by DFS.
+</p>
+<hr/>
 <div>
     <style type="text/css">
         #ex1Slider .slider-selection {
@@ -73,11 +76,15 @@
 </div>
 <canvas id="cav2" width="415" height="415"></canvas>
 <script type="text/javascript">
+// Declare namespaces
+var canvas2 = canvas2 || {};
+var DFS = DFS || {};
+
 function run_dfs(sz){
     console.clear();
-    cav2_init();
-    cav2_drawGrid(sz);
-    var walker = new DFS.Walker(cav2_roomId(1, 0));
+    canvas2.init();
+    canvas2.drawGrid(sz);
+    var walker = new DFS.Walker(canvas2.roomId(1, 0));
     walker.dfs();
     console.log(''+walker.roomsVisited.length+' room(s) found: '+walker.roomsVisited);
     show_results(walker.roomsVisited);
@@ -85,7 +92,7 @@ function run_dfs(sz){
 
 function show_results(r){
     for (var ri in r) {
-        cav2_labelRoom(~~(r[ri]/cav2_sz), r[ri]%cav2_sz, ''+r[ri]+' ['+ri+']');
+        canvas2.labelRoom(~~(r[ri]/canvas2.sz), r[ri]%canvas2.sz, ''+r[ri]+' ['+ri+']');
     }
 }
 
@@ -99,6 +106,9 @@ $(function(){ run_dfs($('#ex1').slider('getValue')); });
 ------------------------------------------- -->
 
 <div class="tab-pane" id="3">
+<p>Change size or click on the slider to regenerate.<br/>
+</p>
+<hr/>
 
 </div>
 

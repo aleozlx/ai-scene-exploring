@@ -1,3 +1,5 @@
+var canvas2 = canvas2 || {}; // Declare namespace 'canvas2'
+
 var DFS = DFS || {}; // Namespace
 
 DFS.Walker = function(roomId){ // Constructor
@@ -38,30 +40,30 @@ DFS.Walker.prototype.walkInto = function(doorId){
         // return to previous room.
         // The former case is handled in the same way as the latter.
         
-        var _oldRoomId = this.roomId;
         this.roomId = this.path.pop();
-        if(this.roomId == undefined) console.error('walkInto: backtracking error');
-        console.debug('walkInto: '+_oldRoomId+' ? '+this.roomId+' (backtrack)');
+        console.debug('walkInto: backtrack to '+this.roomId);
+        // if(this.roomId == undefined) console.error('walkInto: backtracking error');
         return 1;
     }
     
     /* This part is dependent on the structure of the game scene */
         
     // Locate the AI
-    var i = ~~(this.roomId / cav2_sz);
-    var j = this.roomId % cav2_sz;
+    var i = ~~(this.roomId / canvas2.sz);
+    var j = this.roomId % canvas2.sz;
     
     // Find out direction to the door
-    var direction = cav2_directionToDoor(i, j, doorId);
+    var direction = canvas2.directionToDoor(i, j, doorId);
     
     // Get new roomId
-    var nextRoom = cav2_walkTo(i, j, direction);
+    var nextRoom = canvas2.walkTo(i, j, direction);
     var oldRoomId = this.roomId;
-    var newRoomId = nextRoom[0] * cav2_sz + nextRoom[1];
+    var newRoomId = nextRoom[0] * canvas2.sz + nextRoom[1];
     /* ========================================================= */
     
     if(this.roomsVisited.indexOf(newRoomId)>=0){
-        console.debug('walkInto: Room '+newRoomId+' has been visited.');
+        console.debug('walkInto: '+oldRoomId+' '+direction+' '+newRoomId+' (visited)');
+        console.debug('walkInto: step back to '+oldRoomId);
         return 0;
     }
     else{
@@ -79,18 +81,18 @@ DFS.Walker.prototype.scanDoors = function(doorExcluded) {
     /* This part is dependent on the structure of the game scene */
     
     // Locate the AI
-    var i = ~~(this.roomId / cav2_sz);
-    var j = this.roomId % cav2_sz;
+    var i = ~~(this.roomId / canvas2.sz);
+    var j = this.roomId % canvas2.sz;
     
     var doorId;
     // Look around and discover new doors
-    doorId = cav2_isDoorOpen(i, j, '^');
+    doorId = canvas2.isDoorOpen(i, j, '^');
     if(doorId > 0) doors.push(doorId);
-    doorId = cav2_isDoorOpen(i, j, '>');
+    doorId = canvas2.isDoorOpen(i, j, '>');
     if(doorId > 0) doors.push(doorId);
-    doorId = cav2_isDoorOpen(i, j, 'v');
+    doorId = canvas2.isDoorOpen(i, j, 'v');
     if(doorId > 0) doors.push(doorId);
-    doorId = cav2_isDoorOpen(i, j, '<');
+    doorId = canvas2.isDoorOpen(i, j, '<');
     if(doorId > 0) doors.push(doorId);
     /* ========================================================= */
     var excluded = doors.indexOf(doorExcluded);
@@ -104,7 +106,6 @@ DFS.Walker.prototype.sortDoors = function(doors) {
     // ...
     
     // the fake door again, cue to backtrack
-    // if(doors.length) 
-        doors.push(-1);
+    doors.push(-1);
     return doors;
 };
