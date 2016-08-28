@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>ai-scene-exploring</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="js/graphics.js"></script>
+    <script type="text/javascript" src="js/dfs.js"></script>
+    <script type="text/javascript" src="js/nav_astar.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-header">
+        <h1>ai-scene-exploring</h1>
+            <div><em><!-- subtitle --></em></div>
+      </div>
+    </div>
+    
+    <div id="exTab2" class="container">	
+        <ul class="nav nav-tabs">
+    		<li><a href="#1" data-toggle="tab">Overview</a></li>
+    		<li class="active"><a href="#2" data-toggle="tab">DFS all rooms</a></li>
+    		<li><a href="#3" data-toggle="tab">A* Navigating</a></li>
+    	</ul>
+    	<div class="tab-content ">
+            
+<!-- ----------------------------------------- 
+                    Tab 1
+------------------------------------------- -->
+
+<div class="tab-pane" id="1">
+<h3>Algorithms for navigating around and searching a game scene.</h3>
+<h4>The game scene is a floor inside some building. Problems involed in exploring the scene are broken down into multiple levels:</h4>
+<ol>
+    <li>Traversing all rooms with DFS.</li>
+    <li>Navigating around a gridded area with A*.</li>
+</ol>
+</div>
+
+<!-- ----------------------------------------- 
+                    Tab 2
+------------------------------------------- -->
+
+<div class="tab-pane active" id="2">
+<!-- ref:
+    http://seiyria.com/bootstrap-slider/
+-->
+<h3>DFS</h3>
+<p>See console output for DFS results. Change size or click on the slider to regenerate.</p>
+<div>
+    <style type="text/css">
+        #ex1Slider .slider-selection {
+            background: #BABABA;
+        }
+    </style>
+    <label for="ex1">Scene size</label>
+    <input id="ex1" data-slider-id='ex1Slider' type="text" data-slider-min="2" data-slider-max="8" data-slider-step="1" data-slider-value="4" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/9.2.0/css/bootstrap-slider.min.css" media="all" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/9.2.0/bootstrap-slider.min.js"></script>
+    <script type="text/javascript">
+        $('#ex1').slider({
+            formatter: function(value) {
+                return '' + value + ' by ' + value;
+            },
+            tooltip: 'always'
+        }).on('slideStop', function(event) {
+            run_dfs(event.value);
+        });
+    </script>
+</div>
+<canvas id="cav2" width="415" height="415"></canvas>
+<script type="text/javascript">
+function run_dfs(sz){
+    console.clear();
+    cav2_init();
+    cav2_drawGrid(sz);
+    var walker = new DFS.Walker(cav2_roomId(1, 0));
+    walker.dfs();
+    console.log(''+walker.roomsVisited.length+' room(s) found: '+walker.roomsVisited);
+    show_results(walker.roomsVisited);
+}
+
+function show_results(r){
+    for (var ri in r) {
+        cav2_labelRoom(~~(r[ri]/cav2_sz), r[ri]%cav2_sz, ''+r[ri]+' ['+ri+']');
+    }
+}
+
+$(function(){ run_dfs($('#ex1').slider('getValue')); });
+
+</script>
+</div>
+
+<!-- ----------------------------------------- 
+                    Tab 3
+------------------------------------------- -->
+
+<div class="tab-pane" id="3">
+
+</div>
+
+<!-- ----------------------------------------- 
+                    Nailed it
+------------------------------------------- -->
+
+        </div>
+    </div>
+    <a href="https://github.com/watupraccoons/ai-scene-exploring"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/e7bbb0521b397edbd5fe43e7f760759336b5e05f/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png"></a>
+  </body>
+</html>

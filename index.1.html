@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en" ng-app="settleBill" ng-controller="MainController">
+  <head>
+    <title>Settle a bill</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <style>
+      body {
+        padding-top: 60px;
+      }
+      .final-balance {
+        font-size: large;
+        color: #9305bb;
+      }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <!--<script src="/js/bootstrap.min.js"></script>-->
+    <!--<script src="/js/angular.min.js"></script>-->
+    <!--<script src="/js/decimal.min.js"></script>-->
+    <script type="text/javascript">
+    var app = angular.module('settleBill', [], function(){
+        });
+   
+        app.controller('MainController', function($scope){
+                $scope.inputdata="Aaron: 20.4 50.6 45 45.40 40 32.8 52\n\
+Branda: 29 40 30 25 49.9 59 23\n\
+Clair: 64.6 33.7 33.7 24 33.78 90\n\
+Doug: 15 42.70 32.8 58.8\n\
+Eko: 150.22\n\
+Freya: 25.5 34.9 45.45 50";
+
+                $scope.recalc=function(){
+                        const NAME=0, VAL=1;
+                        $scope.expenses=parse_expenses($scope.inputdata);
+                        $scope.valid_input=$scope.expenses.length>0;
+                        // $scope.sums=$scope.expenses.map(o=>[o[NAME], SUM(o[VAL])]);
+                        $scope.sums=$scope.expenses.map(function(o){return [o[NAME], SUM(o[VAL])];});
+                        // $scope.avg=AVG($scope.sums.map(o=>o[VAL]));
+                        $scope.avg=AVG($scope.sums.map(function(o){return o[VAL];}));
+                        // $scope.delta=DELTA($scope.sums.map(o=>o[VAL]), $scope.avg);
+                        $scope.delta=DELTA($scope.sums.map(function(o){return o[VAL];}), $scope.avg);
+                        $scope.delta_sum=SUM($scope.delta);
+                        // $scope.summary=$scope.sums.map((o,i)=>[o[0], o[1], $scope.delta[i]]);
+                        $scope.summary=$scope.sums.map(function(o,i){ return [o[0], o[1], $scope.delta[i]];});
+                        // var nm=(i)=>$scope.expenses[i][0];
+                        var nm=function(i){return $scope.expenses[i][0];}
+                        // $scope.transactions=algorithm1($scope.delta).map((o)=>[nm(o[0]),nm(o[1]),o[2]]);
+                        $scope.transactions=algorithm1($scope.delta).map(function(o){ return [nm(o[0]),nm(o[1]),o[2]];});
+                        $scope.verification=verify($scope.summary, $scope.transactions);
+                };
+        });
+    </script>
+    <script type="text/javascript">
+        function warn(line, message, input){
+                console.warn("syntax err: L"+line+": "+message+(input!=undefined?"\n  input was "+input.toString():""));
+        }
+   
+    function parse_expenses(raw_input){
+        var lines=raw_input.match(/^.*((\r\n|\n|\r)|$)/gm);
+        var expenses=[];
+        for(var i=0;i<lines.length;i++){
+                var line=lines[i].trim();
+                var m0=line.match(/^(.+):\x20*(.+)$/);
+                if(m0==null) { warn(i+1, "pattern couldn't match"); continue; }
+                var name=m0[1], a=m0[2].split(/\s+/);
+                expenses.push([name,a.map(function(o){
+                        try{ return new Decimal(o); }
+                        catch(err){
+                                warn(i+1, err.message, o);
+                                return new Decimal(0);
+                        }
+                })]);
+        }
+        // for(var name in expenses) console.debug(expenses[name][0].toString());
+        return expenses;
+    }
+    
+    function monetize(x){ return new Decimal(x.toFixed(2)); }
+    
+    function SUM(A){
+        var s=new Decimal(0);
+        for(var i=0;i<A.length;i++) s=s.plus(A[i]);
+        return s;
+    }
+    
+    function MIN(A){
+        var m=new Decimal(Infinity);
+        for(var i=0;i<A.length;i++) if(A[i].lt(m)) m=A[i];
+        return m;
+    }
+    
+    function AVG(A){
+        return monetize(SUM(A).dividedBy(new Decimal(A.length)));
+    }
+    
+    function DELTA(A, u){
+        // var delta=A.map(o=>o.minus(u));
+        var delta=A.map(function(o){ return o.minus(u); });
+        var sum_delta=SUM(delta);
+        if(!sum_delta.isZero()){
+                var min_delta=MIN(delta);
+                for(var i=0;i<A.length;i++) if(delta[i].equals(min_delta)) {
+                        delta[i]=delta[i].minus(sum_delta);
+                        break;
+                }
+        }
+        return delta;
+    }
+    
+    function verify(summary, transactions){
+        var balance=summary.map(function(o){ return o[1].negated(); });
+        // var balance=summary.map(o=>o[1].negated());
+        var result=[];
+        for(var i=0;i<summary.length;i++){
+                result.push([summary[i][0], '', balance[i].toString(), false]);
+                for(var j=0;j<transactions.length;j++) {
+                        if(summary[i][0]==transactions[j][0]){
+                                balance[i]=balance[i].minus(transactions[j][2]);
+                                result.push(['',transactions[j][2].negated().toString(), balance[i].toString(), false]);
+                        }
+                        else if(summary[i][0]==transactions[j][1]){
+                                balance[i]=balance[i].plus(transactions[j][2]);
+                                result.push(['',transactions[j][2].toString(), balance[i].toString(), false]);
+                        }
+                }
+                result[result.length-1][3]=true;
+        }
+        return result;
+    }
+    
+    function algorithm1(delta){
+        // function grpgen(f, g){
+        //      return g.map((o,i)=>[i,o]).filter(f).sort((a,b)=>a[1].absoluteValue().minus(b[1].absoluteValue()).toNumber()).reverse();
+        // }
+        function grpgen(f, g){
+                return g.map(function (o,i){return [i,o];}).filter(f).sort(function (a,b){ return a[1].absoluteValue().minus(b[1].absoluteValue()).toNumber(); }).reverse();
+        }
+        var ZERO=new Decimal(0);
+        // var pg=grpgen(x=>x[1].gt(ZERO), delta), ng=grpgen(x=>x[1].lt(ZERO), delta);
+        // function any(pg, ng){
+        //      return pg.some(x=>!x[1].isZero())|ng.some(x=>!x[1].isZero());
+        // }
+        var pg=grpgen(function(x){return x[1].gt(ZERO);}, delta), ng=grpgen(function (x){ return x[1].lt(ZERO);}, delta);
+        function any(pg, ng){
+                return pg.some(function(x){ return !x[1].isZero();})||ng.some(function(x){ return !x[1].isZero();});
+        }
+        var transactions=[];
+        while(any(pg, ng)){
+                for(var i=0;i<pg.length;i++){
+                        var pd=pg[i][1];
+                        if(pd.isZero())continue;
+                        for(var j=0;j<ng.length;j++){
+                                var nd=ng[j][1];
+                                if(nd.isZero())continue;
+                                if(pd.plus(nd).gte(ZERO)){
+                                        transactions.push([ng[j][0],pg[i][0],nd.negated()]);
+                                        pg[i][1]=pg[i][1].plus(nd);
+                                        ng[j][1]=new Decimal(0);
+                                        break;
+                                }
+                        }
+                }
+                for(var j=0;j<ng.length;j++){
+                        var nd=ng[j][1];
+                        if(nd.isZero())continue;
+                        for(var i=0;i<pg.length;i++){
+                                var pd=pg[i][1];
+                                if(pd.isZero())continue;
+                                if(pd.plus(nd).lte(ZERO)){
+                                        transactions.push([ng[j][0],pg[i][0],pd]);
+                                        ng[j][1]=ng[j][1].plus(pd);
+                                        pg[i][1]=new Decimal(0);
+                                        break;
+                                }
+                        }
+                }
+        }
+        return transactions;
+    }
+    </script>
+  </head>
+  <body>
+    <div class="container" ng-init="recalc()">
+      <div class="navbar navbar-fixed-top navbar-inverse">
+        <div class="navbar-inner">
+          <div class="pull-right">
+            <a href="#" class="brand">@author Alex</a>
+          </div>
+        </div>
+      </div>
+      <div class="page-header">
+        <h1>Settle a bill!</h1>
+                <div><em><!-- subtitle --></em></div>
+      </div>
+      <div class="row">
+        <div class="span10">
+          <h2>Input</h2>
+          <textarea class="span10" style="height: 200px" ng-model="inputdata" ng-change="recalc()"></textarea>
+                  <h2>Summary</h2>
+          <table class="table table-striped table-bordered">
+            <thead>
+              <tr>
+                <th class="span2">Name</th>
+                <th class="span2">Spending Total</th>
+                <th class="span5">Adjusted Assets</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="item in summary">
+                <td class="span2">{{item[0]}}</td>
+                <td class="span2">{{item[1].toString()}}</td>
+                <td class="span5">{{item[2].toString()}}</td>
+              </tr>
+              <tr>
+                <td class="span2"><span ng-show="!valid_input">NO VALID INPUT DATA</span></td>
+                <td class="span2"><span ng-show="valid_input">AVG {{avg.toString()}}</span></td>
+                <td class="span5"><span ng-show="valid_input">SUM {{delta_sum.toString()}} {{{true:"CHECK!", false:""}[delta_sum.isZero()]}}</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <h2>Solution</h2>
+          <table class="table table-striped table-bordered">
+            <thead>
+              <tr>
+                <th class="span2">From</th>
+                <th class="span2">To</th>
+                <th class="span5">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="item in transactions">
+                <td class="span2">{{item[0]}}</td>
+                <td class="span2">{{item[1]}}</td>
+                <td class="span5">{{item[2].toString()}}</td>
+              </tr>
+            </tbody>
+          </table>
+          <h2>Verification</h2>
+          <table class="table table-striped table-bordered">
+            <thead>
+              <tr>
+                <th class="span2">Name</th>
+                <th class="span2">Amount</th>
+                <th class="span5">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="item in verification">
+                <td class="span2">{{item[0]}}</td>
+                <td class="span2">{{item[1]}}</td>
+                <td class="span5" ng-class="{true:'final-balance', false:''}[item[3]]">{{item[2]}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
