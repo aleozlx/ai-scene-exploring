@@ -23,7 +23,7 @@
         <ul class="nav nav-tabs">
     		<li><a href="#1" data-toggle="tab">Overview</a></li>
     		<li class="active"><a href="#2" data-toggle="tab">DFS all rooms</a></li>
-    		<li><a href="#3" data-toggle="tab">A* Navigating</a></li>
+    		<li><a href="#3" data-toggle="tab">A* Navigation</a></li>
     	</ul>
     	<div class="tab-content ">
             
@@ -106,10 +106,19 @@ $(function(){ run_dfs($('#ex1').slider('getValue')); });
 ------------------------------------------- -->
 
 <div class="tab-pane" id="3">
-<p>Change size or click on the slider to regenerate.<br/>
-</p>
+
+<div style="margin-top: 10px;">
+    <button type="button" class="btn btn-primary">...</button>
+</div>
 <hr/>
 
+
+<canvas id="cav3" width="1000" height="450"></canvas>
+<script type="text/javascript">
+// Declare namespaces
+var canvas3 = canvas3 || {};
+$(function(){ canvas3.init(); });
+</script>
 </div>
 
 <!-- ----------------------------------------- 
